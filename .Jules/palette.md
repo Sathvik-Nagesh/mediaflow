@@ -1,0 +1,3 @@
+## 2024-09-11 - Accessible Tooltips on Icon Buttons
+**Learning:** Found an accessibility anti-pattern in the downloads list where icon-only buttons relied entirely on the native OS `title` attribute for screen readers and tooltips. While `title` works somewhat, it's inconsistently read by screen readers and has poor UX (delays, unstylable).
+**Action:** Replaced `title` attributes with explicit `aria-label`s on the `<Button>` components and wrapped them in Radix UI `<Tooltip>` components. Next time I create an icon-only button, always ensure it has an `aria-label` and use the design system's `Tooltip` component for visual context.
