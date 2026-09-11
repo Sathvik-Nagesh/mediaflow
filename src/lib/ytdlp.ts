@@ -11,17 +11,35 @@ export interface YtDlpMetadata {
   url: string;
 }
 
+export const DEFAULT_YTDLP_ARGS = [
+  '--remote-components', 'ejs:github',
+  '--js-runtimes', 'node',
+  '--js-runtimes', 'quickjs',
+  '--js-runtimes', 'deno',
+  '--no-update',
+];
+
 export async function fetchMetadata(url: string): Promise<YtDlpMetadata[]> {
-  const command = Command.create('yt-dlp', ['--dump-json', '--flat-playlist', url]);
+  const command = Command.create('yt-dlp', [
+    ...DEFAULT_YTDLP_ARGS,
+    '--dump-json',
+    '--flat-playlist',
+    url
+  ]);
   
   const output = await command.execute();
   
   if (output.code !== 0) {
-    throw new Error(`yt-dlp error: ${output.stderr}`);
+    throw new Error(`yt-dlp error: ${output.stderr || output.stdout}`);
   }
   
   try {
-    const lines = output.stdout.trim().split('\n');
+    const lines = output.stdout
+      .trim()
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.startsWith('{'));
+
     return lines.map(line => {
       const data = JSON.parse(line);
       
@@ -35,16 +53,16 @@ export async function fetchMetadata(url: string): Promise<YtDlpMetadata[]> {
 
       return {
         id: data.id,
-        title: data.title,
+        title: data.title || 'Untitled',
         thumbnail: data.thumbnails?.[0]?.url || data.thumbnail || '',
         duration_string: data.duration_string || (data.duration ? `${Math.floor(data.duration / 60)}:${(data.duration % 60).toString().padStart(2, '0')}` : '--:--'),
         uploader: data.uploader || data.channel || 'Unknown',
         resolutions,
-        url: data.url || url
+        url: data.url || data.webpage_url || (data.id ? `https://www.youtube.com/watch?v=${data.id}` : url)
       };
     });
   } catch (e) {
-    throw new Error("Failed to parse yt-dlp metadata");
+    throw new Error(`Failed to parse yt-dlp metadata: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
 
@@ -74,7 +92,15 @@ export async function startDownload(
   const defaultDir = await join(baseDir, 'MediaFlow');
   const targetDir = await getSetting('download-path', defaultDir);
 
-  const args = ['--progress', '--newline', '-P', targetDir, '-o', '%(title)s.%(ext)s'];
+  const args = [
+    ...DEFAULT_YTDLP_ARGS,
+    '--progress',
+    '--newline',
+    '-P',
+    targetDir,
+    '-o',
+    '%(title)s.%(ext)s',
+  ];
   
   if (options.format === 'audio') {
     args.push('-x', '--audio-format', 'mp3', '--audio-quality', options.audioQuality);
@@ -154,6 +180,16 @@ export async function checkYtDlp(): Promise<boolean> {
     return output.code === 0;
   } catch (e) {
     return false;
+  }
+}
+
+export async function getYtDlpVersion(): Promise<string> {
+  try {
+    const command = Command.create('yt-dlp', ['--version']);
+    const output = await command.execute();
+    return output.code === 0 ? output.stdout.trim() : 'Unknown';
+  } catch (e) {
+    return 'Unknown';
   }
 }
 

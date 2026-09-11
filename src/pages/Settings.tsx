@@ -9,11 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { open } from "@tauri-apps/plugin-dialog";
 import { downloadDir, join } from "@tauri-apps/api/path";
 import { getSetting, saveSetting } from "@/lib/db";
+import { getYtDlpVersion } from "@/lib/ytdlp";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 
 export default function Settings() {
   const [downloadPath, setDownloadPath] = useState("");
+  const [ytdlpVersion, setYtdlpVersion] = useState("Checking...");
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
@@ -22,6 +24,9 @@ export default function Settings() {
       const defaultDir = await join(baseDir, 'MediaFlow');
       const savedPath = await getSetting('download-path', defaultDir);
       setDownloadPath(savedPath);
+
+      const version = await getYtDlpVersion();
+      setYtdlpVersion(version);
     }
     loadSettings();
   }, []);
@@ -143,6 +148,16 @@ export default function Settings() {
                   <SelectItem value="10">10</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t">
+              <div className="space-y-0.5">
+                <Label>yt-dlp Engine Version</Label>
+                <p className="text-sm text-muted-foreground">Installed core extraction engine.</p>
+              </div>
+              <div className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                {ytdlpVersion}
+              </div>
             </div>
           </CardContent>
         </Card>
