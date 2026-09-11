@@ -5,10 +5,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useDownloadStore } from "@/store/useDownloadStore";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMemo } from "react";
 
 export default function Downloads() {
   const { downloads, removeDownload, pauseDownload } = useDownloadStore();
-  const downloadList = Object.values(downloads).sort((a, b) => Number(b.id) - Number(a.id));
+
+  const downloadList = useMemo(() => {
+    return Object.values(downloads).sort((a, b) => Number(b.id) - Number(a.id));
+  }, [downloads]);
 
   return (
     <div className="p-8 max-w-5xl mx-auto w-full space-y-8">
