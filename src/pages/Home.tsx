@@ -16,7 +16,7 @@ import { useHomeStore } from "@/store/useHomeStore";
 import { saveHistory } from "@/lib/db";
 import { motion, AnimatePresence } from "framer-motion";
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 export default function Home() {
   const {
@@ -39,6 +39,13 @@ export default function Home() {
   const navigate = useNavigate();
   const { addDownload, updateDownload } = useDownloadStore();
   const [playlistSearch, setPlaylistSearch] = useState("");
+
+  const filteredMetadata = useMemo(() => {
+    if (!metadata) return [];
+    if (!playlistSearch) return metadata;
+    const lowerSearch = playlistSearch.toLowerCase();
+    return metadata.filter(item => (item.title || "").toLowerCase().includes(lowerSearch));
+  }, [metadata, playlistSearch]);
 
   const handlePaste = async () => {
     try {
@@ -281,7 +288,7 @@ export default function Home() {
                 </div>
                 <ScrollArea className="flex-1">
                   <div className="p-2 space-y-1">
-                    {metadata.filter(item => (item.title || "").toLowerCase().includes(playlistSearch.toLowerCase())).map((item) => {
+                    {filteredMetadata.map((item) => {
                       const itemId = item.id || item.url;
                       return (
                         <div key={itemId} className="flex items-center space-x-3 p-2 hover:bg-muted/50 rounded-md transition-colors">
