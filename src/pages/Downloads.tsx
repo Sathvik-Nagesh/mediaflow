@@ -3,6 +3,7 @@ import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDownloadStore } from "@/store/useDownloadStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMemo } from "react";
@@ -15,15 +16,16 @@ export default function Downloads() {
   }, [downloads]);
 
   return (
-    <div className="p-8 max-w-5xl mx-auto w-full space-y-8">
-      <div className="space-y-2">
+    <TooltipProvider delayDuration={300}>
+      <div className="p-8 max-w-5xl mx-auto w-full space-y-8">
+        <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Downloads</h1>
         <p className="text-muted-foreground">Manage your active and queued downloads.</p>
       </div>
 
-      <div className="space-y-4">
-        {downloadList.length === 0 && (
-          <motion.div 
+        <div className="space-y-4">
+          {downloadList.length === 0 && (
+            <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="flex flex-col items-center justify-center py-20 text-muted-foreground border-2 border-dashed rounded-xl space-y-4"
@@ -34,11 +36,11 @@ export default function Downloads() {
               <p className="text-sm">Head to the home page to start one.</p>
             </div>
           </motion.div>
-        )}
+          )}
 
-        <AnimatePresence mode="popLayout">
-          {downloadList.map((dl) => (
-            <motion.div
+          <AnimatePresence mode="popLayout">
+            {downloadList.map((dl) => (
+              <motion.div
               key={dl.id}
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -79,44 +81,70 @@ export default function Downloads() {
 
                     <div className="flex items-center gap-2 pl-4 border-l">
                       {dl.status === "downloading" && (
-                        <Button variant="ghost" size="icon" title="Pause / Stop" onClick={() => pauseDownload(dl.id)}>
-                          <Pause className="w-4 h-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label="Pause or Stop" onClick={() => pauseDownload(dl.id)}>
+                              <Pause className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Pause / Stop</TooltipContent>
+                        </Tooltip>
                       )}
                       {dl.status === "paused" && (
-                        <Button variant="ghost" size="icon" title="Resume is not fully supported natively yet" disabled>
-                          <Play className="w-4 h-4 opacity-50" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label="Resume is not fully supported natively yet" disabled>
+                              <Play className="w-4 h-4 opacity-50" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Resume is not fully supported natively yet</TooltipContent>
+                        </Tooltip>
                       )}
                       {dl.status === "completed" && (
                         <>
-                          <Button variant="ghost" size="icon" title="Open Folder" onClick={() => dl.path && revealItemInDir(dl.path).catch(console.error)}>
-                            <FolderOpen className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" title="Clear from queue" onClick={() => removeDownload(dl.id)}>
-                            <X className="w-4 h-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" aria-label="Open Folder" onClick={() => dl.path && revealItemInDir(dl.path).catch(console.error)}>
+                                <FolderOpen className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Open Folder</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" aria-label="Clear from queue" onClick={() => removeDownload(dl.id)}>
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Clear from queue</TooltipContent>
+                          </Tooltip>
                         </>
                       )}
                       {dl.status !== "completed" && (
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="text-destructive hover:text-destructive" 
-                          title="Cancel/Remove"
-                          onClick={() => removeDownload(dl.id)}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="text-destructive hover:text-destructive"
+                              aria-label="Cancel or Remove"
+                              onClick={() => removeDownload(dl.id)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Cancel / Remove</TooltipContent>
+                        </Tooltip>
                       )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
-          ))}
-        </AnimatePresence>
+            ))}
+          </AnimatePresence>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
